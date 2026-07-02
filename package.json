@@ -10,11 +10,13 @@
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.5.1",
+    "@sendgrid/mail": "^8.1.6",
     "@supabase/supabase-js": "^2.108.2",
     "@upstash/redis": "^1.38.0",
     "inngest": "^4.5.1",
     "next": "16.2.9",
     "node-fetch": "^3.3.2",
+    "nodemailer": "^9.0.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "resend": "^6.12.4",
@@ -23,6 +25,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/xml2js": "^0.4.14",
