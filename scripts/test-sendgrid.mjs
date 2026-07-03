@@ -1,10 +1,10 @@
 // Throwaway SendGrid diagnostic. Run: node scripts/test-sendgrid.mjs <to-email>
-// Loads .env.local manually (no Next runtime here).
+// Loads .env manually (no Next runtime here).
 import { readFileSync } from 'node:fs';
 import sgMail from '@sendgrid/mail';
 
 const env = {};
-for (const line of readFileSync('.env.local', 'utf8').split('\n')) {
+for (const line of readFileSync('.env', 'utf8').split('\n')) {
   const m = line.match(/^([A-Z_]+)=(.*)$/);
   if (m) env[m[1]] = m[2].trim().replace(/^"|"$/g, '');
 }

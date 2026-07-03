@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import nodemailer from 'nodemailer';
 
 const env = {};
-for (const line of readFileSync('.env.local', 'utf8').split('\n')) {
+for (const line of readFileSync('.env', 'utf8').split('\n')) {
   const m = line.match(/^([A-Z_]+)=(.*)$/);
   if (m) env[m[1]] = m[2].trim().replace(/^"|"$/g, '');
 }

@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { Resend } from 'resend';
 
 const env = {};
-for (const line of readFileSync('.env.local', 'utf8').split('\n')) {
+for (const line of readFileSync('.env', 'utf8').split('\n')) {
   const m = line.match(/^([A-Z_]+)=(.*)$/);
   if (m) env[m[1]] = m[2].trim().replace(/^"|"$/g, '');
 }
@@ -16,7 +16,7 @@ if (!to) {
   process.exit(1);
 }
 if (!env.RESEND_API_KEY) {
-  console.error('RESEND_API_KEY is not set in .env.local');
+  console.error('RESEND_API_KEY is not set in .env');
   process.exit(1);
 }
 
