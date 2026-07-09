@@ -19,34 +19,39 @@ npm run build    # next build
 npm run start    # next start (production)
 npm run lint     # eslint
 
+# Database migrations (see supabase/README.md — Postgres is NOT directly
+# reachable; the runner goes through the Kong /pg/query endpoint)
+npm run db:migration:new -- <name>   # create supabase/migrations/<ts>_<name>.sql
+npm run db:migrate                   # apply pending migrations
+npm run db:migrate:status            # applied vs pending
+
 # Manual test scripts (no test framework configured). Node 22+ strips TS types inline.
 node --experimental-strip-types scripts/test-scanners.mjs <domain>   # validate all 5 live scanners
 node scripts/test-pdf.mjs                                            # PDF generation
 node scripts/test-resend.mjs / test-sendgrid.mjs / test-gmail.mjs    # email transports
 ```
 
-Local dev requires `INNGEST_DEV=1` in `.env` (forces the Inngest SDK into dev mode; also disables rate limiting in `checkAndLogRateLimit`). Run the Inngest dev server alongside `next dev` to execute background jobs.
+Set `DEV_MODE=1` in `.env` for local development — it disables rate limiting in `checkAndLogRateLimit` and unlocks the dev-only `/api/dev/sample-pdf` route. Background work (scanning, PDF generation) runs in-process via fire-and-forget async pipelines, so no separate worker/dev-server is needed alongside `next dev`.
 
 There is **no automated test suite** — the `scripts/*.mjs` files are ad-hoc validation harnesses run by hand.
 
 ## Architecture
 
-This is a lead-gen tool: a prospect submits their website, the app scans it, asks a short questionnaire, then generates a scored PDF "AI Intelligence Report" and emails it. The whole thing is a **state machine driven by a single Inngest background job**.
+This is a lead-gen tool: a prospect submits their website, the app scans it, asks a short questionnaire, then generates a scored PDF "AI Intelligence Report" and emails it. The whole thing is a **state machine driven by two fire-and-forget async pipelines** (`lib/pipeline/`), each kicked off (not awaited) from an API route. The DB row's `status` column is the single source of truth; the frontend polls for it.
 
 ### The scan lifecycle (follow the `ScanStatus` enum in `types/scan.ts`)
 
 `pending → scanning → questions_pending → questions_received → generating_pdf → complete` (or `failed`).
 
-1. **`POST /api/initiate`** validates input, creates a `scans` row (status `pending`), and fires the `scan.initiated` Inngest event.
-2. **`lib/inngest/scanJob.ts`** (the one long-running function) does everything:
-   - runs all scanners (`runFullScan`) → saves results → status `questions_pending`
-   - **polls the DB every 5s (up to 15 min) waiting for the user to answer questions.** It deliberately does *not* use `step.waitForEvent` alone, because a fast user can submit answers before the wait is registered and the event would be missed — see the long comment in that file. The `scan.answers-submitted` event exists but the DB poll is the race-proof source of truth.
-   - once answered: computes scores → opportunities → routing, generates the PDF, uploads it, emails it, saves everything → status `complete`.
-3. **`POST /api/scan/[scanId]/submit-answers`** persists questionnaire answers (status `questions_received`) — this is what the poll above detects.
-4. **`GET /api/scan/[scanId]/status`** is polled by the frontend for a progress bar (maps status → percentage).
-5. **`app/api/inngest/route.ts`** is the Inngest webhook endpoint that registers `scanJob`.
+1. **`POST /api/initiate`** validates input, creates a `scans` row (status `pending`), then calls `runScanPipeline(scanId, domain)` **without awaiting it** and returns `{ scanId }` immediately.
+2. **`lib/pipeline/runScan.ts`** (`runScanPipeline`) runs all scanners (`runFullScan`) → saves results → status `questions_pending`. On error it marks the row `failed` with the message.
+3. **`POST /api/scan/[scanId]/submit-answers`** persists questionnaire answers (status `questions_received`), then calls `generateReportPipeline(scanId)` **without awaiting it** and returns immediately. Because answers are durably saved *before* the pipeline runs, there is no race and no DB polling/waiting is needed (this is what the old Inngest job's 15-min DB poll worked around).
+4. **`lib/pipeline/generateReport.ts`** (`generateReportPipeline`) computes scores → opportunities → routing, generates the PDF, uploads it, emails it, saves everything → status `complete`. On error it marks the row `failed` with the message.
+5. **`GET /api/scan/[scanId]/status`** is polled by the frontend for a progress bar (maps status → percentage).
 
-Errors inside the final step set status `failed` **with** the error message (so the completion screen fails fast instead of polling for 2 min) and re-throw so Inngest also marks the run failed.
+Both pipelines set status `failed` **with** the error message on any failure (so the completion screen fails fast instead of polling for 2 min). They swallow the error after recording it — since they run detached, there is no caller to re-throw to.
+
+> **Fire-and-forget caveat:** background work runs in the same Node process as the request. This is fine for a self-hosted / long-lived server (`next start`) but will NOT survive on serverless platforms that freeze the function after the response (e.g. Vercel functions without `waitUntil`). If deploying serverless, wrap the `void <pipeline>()` calls in `after()` from `next/server` (or reintroduce a real queue).
 
 ### Scanners — `lib/scanners/`
 
@@ -66,6 +71,8 @@ Single Supabase table `scans` (one row per scan, holds raw scanner JSON, answers
 - `getSupabaseAdmin()` — **service-role key, server-only, bypasses RLS. Never import into a Client Component.**
 
 All queries live in `queries.ts` and are imported as `import * as db`. PDFs go to the public `reports` storage bucket (`uploadPDF`), keyed by `<scanId>.pdf`.
+
+Schema changes go through versioned migrations in `supabase/migrations/`, applied with `npm run db:migrate` — **read `supabase/README.md` first** (self-hosted instance; new tables need explicit `service_role` grants or the app gets `permission denied`).
 
 ### PDF & email
 

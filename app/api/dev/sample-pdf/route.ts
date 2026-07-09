@@ -7,9 +7,9 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 // DEV-ONLY: renders a sample report PDF for visual QA of the design.
-// Guarded behind INNGEST_DEV so it never exists in production.
+// Guarded behind DEV_MODE so it never exists in production.
 export async function GET() {
-  if (!process.env.INNGEST_DEV) {
+  if (!process.env.DEV_MODE) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 

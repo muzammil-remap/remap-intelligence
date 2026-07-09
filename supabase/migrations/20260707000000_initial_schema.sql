@@ -1,8 +1,9 @@
--- REMAP Intelligence — database schema
--- Single source of truth for the Supabase `scans` table + `reports` storage bucket.
+-- Initial schema: `scans` table + `reports` storage bucket.
 -- Derived from types/scan.ts (ScanRecord) and lib/db/queries.ts.
 --
--- Apply against a fresh Supabase project. Idempotent: safe to re-run.
+-- Migrations are applied in filename order by scripts/migrate.mjs (see
+-- supabase/README.md). This one is idempotent because it baselined a database
+-- that already had the schema; new migrations don't need to be.
 
 -- ---------------------------------------------------------------------------
 -- scans table

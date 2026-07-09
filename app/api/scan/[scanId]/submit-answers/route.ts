@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { inngest } from '@/inngest.config';
 import * as db from '@/lib/db/queries';
+import { generateReportPipeline } from '@/lib/pipeline/generateReport';
 import type { ScanAnswers } from '@/types/scan';
 
 export const runtime = 'nodejs';
@@ -49,15 +49,11 @@ export async function POST(
     return NextResponse.json({ error: 'Could not save answers' }, { status: 500 });
   }
 
-  try {
-    await inngest.send({
-      name: 'scan.answers-submitted',
-      data: { scanId },
-    });
-  } catch (err) {
-    console.error('[submit-answers] inngest.send error', err);
-    // Answers are saved; the job's waitForEvent may time out and still proceed.
-  }
+  // Answers are durably saved. Kick off report generation in the background —
+  // we do NOT await it so the response returns immediately; the frontend polls
+  // GET /api/scan/[scanId]/status for progress. The pipeline handles its own
+  // errors by marking the scan row `failed`.
+  void generateReportPipeline(scanId);
 
   return NextResponse.json({ success: true });
 }

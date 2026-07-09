@@ -160,8 +160,8 @@ export async function checkAndLogRateLimit(
   email: string,
 ): Promise<RateLimitCheck> {
   // In local development the rate limit just gets in the way of repeated
-  // testing, so skip it. INNGEST_DEV is only set locally (never in prod).
-  if (process.env.INNGEST_DEV) {
+  // testing, so skip it. DEV_MODE is only set locally (never in prod).
+  if (process.env.DEV_MODE) {
     return { allowed: true };
   }
 

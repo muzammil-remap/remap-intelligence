@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { inngest } from '@/inngest.config';
 import * as db from '@/lib/db/queries';
+import { runScanPipeline } from '@/lib/pipeline/runScan';
 import {
   cleanDomain,
   isValidEmail,
@@ -73,15 +73,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  try {
-    await inngest.send({
-      name: 'scan.initiated',
-      data: { scanId, domain: clean, competitorDomain: competitorClean },
-    });
-  } catch (err) {
-    console.error('[initiate] inngest.send error', err);
-    // Scan row exists; the background job can be retried. Don't fail the user.
-  }
+  // Kick off the scan in the background. We deliberately do NOT await this —
+  // the response returns immediately and the frontend polls
+  // GET /api/scan/[scanId]/status for progress. The pipeline handles its own
+  // errors by marking the scan row `failed`.
+  void runScanPipeline(scanId, clean);
 
   return NextResponse.json({ scanId });
 }
