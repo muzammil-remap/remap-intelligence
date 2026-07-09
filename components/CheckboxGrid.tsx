@@ -53,7 +53,7 @@ export default function CheckboxGrid({ onSubmit, submitting }: CheckboxGridProps
                     fontSize: 13.5,
                     cursor: 'pointer',
                     transition: 'all 150ms ease',
-                    background: checked ? T.orangeDim : T.surface,
+                    background: checked ? T.orangeDim : T.pillBg,
                     border: `1px solid ${checked ? T.orange : T.borderSubtle}`,
                     color: checked ? T.textPrimary : T.textSecondary,
                     fontWeight: checked ? 500 : 400,

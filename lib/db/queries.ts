@@ -148,7 +148,7 @@ export async function saveScoresAndOpportunities(
   }
 }
 
-// --- Rate limiting (DB-based for MVP; Phase 2 = Upstash Redis) ---
+// --- Rate limiting (DB-based) ---
 
 export interface RateLimitCheck {
   allowed: boolean;

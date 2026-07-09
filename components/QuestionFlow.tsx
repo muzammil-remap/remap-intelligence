@@ -7,7 +7,10 @@ import CheckboxGrid from './CheckboxGrid';
 
 interface QuestionFlowProps {
   scanId: string | null;
-  onAllAnswered: () => void; // marks the "Your questions" tracker item done
+  onProgress?: (answered: number) => void; // fires after each question, 1..5
+  onAllAnswered: () => void; // Q5 answered → manual-tasks checklist shows
+  onSubmitStart?: () => void; // final submit kicked off
+  onSubmitError?: () => void; // final submit failed (rail leaves compiling state)
   onComplete: () => void; // navigate to completion screen
 }
 
@@ -31,7 +34,10 @@ function summarise(value: AnswerValue): string {
 
 export default function QuestionFlow({
   scanId,
+  onProgress,
   onAllAnswered,
+  onSubmitStart,
+  onSubmitError,
   onComplete,
 }: QuestionFlowProps) {
   const [index, setIndex] = useState(0);
@@ -68,6 +74,7 @@ export default function QuestionFlow({
 
     setAnswers(next);
     setHistory((h) => [...h, { q: question.q, a: summarise(value) }]);
+    onProgress?.(index + 1);
 
     if (index < QUESTIONS.length - 1) {
       setIndex((i) => i + 1);
@@ -81,6 +88,7 @@ export default function QuestionFlow({
   const handleSubmit = async (selections: string[]) => {
     setSubmitting(true);
     setError(null);
+    onSubmitStart?.();
     try {
       if (!scanId) throw new Error('Scan not ready');
       const res = await fetch(`/api/scan/${scanId}/submit-answers`, {
@@ -96,12 +104,13 @@ export default function QuestionFlow({
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong');
       setSubmitting(false);
+      onSubmitError?.();
     }
   };
 
   return (
     <div>
-      {/* Answered history as grey chat */}
+      {/* Answered history as dimmed transcript */}
       {history.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
           {history.map((h, i) => (
@@ -114,7 +123,7 @@ export default function QuestionFlow({
                   fontSize: 14,
                   color: T.textSecondary,
                   margin: 0,
-                  background: T.surface,
+                  background: T.pillBg,
                   border: `1px solid ${T.borderSubtle}`,
                   borderRadius: 10,
                   padding: '9px 12px',

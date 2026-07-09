@@ -28,7 +28,7 @@ npm run db:migrate:status            # applied vs pending
 # Manual test scripts (no test framework configured). Node 22+ strips TS types inline.
 node --experimental-strip-types scripts/test-scanners.mjs <domain>   # validate all 5 live scanners
 node scripts/test-pdf.mjs                                            # PDF generation
-node scripts/test-resend.mjs / test-sendgrid.mjs / test-gmail.mjs    # email transports
+node scripts/test-sendgrid.mjs                                       # email delivery (SendGrid)
 ```
 
 Set `DEV_MODE=1` in `.env` for local development — it disables rate limiting in `checkAndLogRateLimit` and unlocks the dev-only `/api/dev/sample-pdf` route. Background work (scanning, PDF generation) runs in-process via fire-and-forget async pipelines, so no separate worker/dev-server is needed alongside `next dev`.
@@ -77,11 +77,13 @@ Schema changes go through versioned migrations in `supabase/migrations/`, applie
 ### PDF & email
 
 - `lib/pdf/generatePDF.tsx` uses `@react-pdf/renderer`. This package is listed in `serverExternalPackages` in `next.config.ts` — it pulls in native deps (fontkit/yoga) that break if bundled. Don't remove that.
-- `lib/email/sendReport.ts` supports **three interchangeable transports** selected by the `EMAIL_TRANSPORT` env var (`resend` default, `sendgrid`, `gmail`). Switching is a one-line env change. See the header comment for the account/verification caveats (SendGrid account has reputation issues; Resend falls back to the `onboarding@resend.dev` sandbox sender until `remap.ai` is verified there).
+- `lib/email/sendReport.ts` sends via **SendGrid only** (`SENDGRID_API_KEY` + `SENDGRID_FROM_EMAIL`; the From domain must be authenticated in the SendGrid account). The earlier Resend/Gmail transports and the `EMAIL_TRANSPORT` switch were removed.
 
 ### Frontend
 
-Client-heavy App Router pages. `app/page.tsx` is the intake form → scan tracker → question flow, all client-side with `fetch` to the API routes. Components under `components/` are the UI (`Dashboard`, `QuestionFlow`, `ScoreRing`, etc.). **All design tokens (dark theme colors) live in `lib/constants.ts` as the `T` object — use it, don't hardcode colors.** `app/dashboard/[view]/` is a Phase 2 shell (sub-views locked).
+Client-heavy App Router pages. `app/page.tsx` has two states: **pre-scan** shows a hero (headline + `components/HeroVisual.tsx` sample-report card + stat row) over the intake form and a 3-card feature strip; **post-scan** switches to a two-column journey — an animated left-rail checklist (`components/JourneyRail.tsx` — details → scan sources → questions → manual tasks → compile) beside the question flow. All client-side with `fetch` to the API routes. Components under `components/` are the UI (`Dashboard`, `QuestionFlow`, `ScoreRing`, etc.). `app/dashboard/[view]/` is a Phase 2 shell (sub-views locked).
+
+**Theming:** the app has light + dark modes. All design tokens live as CSS custom properties in `app/globals.css` (`:root` = dark default, `[data-theme="light"]` overrides), and `lib/constants.ts` exposes them as the `T` object whose values are `var(--…)` strings — **use `T`/the variables, never hardcode colors** (except in emails/PDF, which can't use CSS vars: the PDF uses the separate `PDF` palette in `constants.ts`). The theme is applied before paint by an inline script in `app/layout.tsx` (localStorage `remap-theme`, falling back to the OS preference) and toggled by `components/ThemeToggle.tsx`; `components/Logo.tsx` renders both logo PNGs and CSS picks one per theme. Fonts are Manrope (UI, `--font-manrope`) and Space Grotesk (display headings via the `.h-display` class), self-hosted through `next/font`.
 
 ### Config notes
 

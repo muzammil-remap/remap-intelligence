@@ -39,17 +39,17 @@ function nextButtonStyle(enabled: boolean): React.CSSProperties {
 export default function QuestionCard({ question, onAnswer }: QuestionCardProps) {
   return (
     <div className="q-enter">
-      <p className="micro-label" style={{ color: T.orange, marginBottom: 8 }}>
-        {question.id.toUpperCase()}
+      <p className="micro-label" style={{ color: T.orange, marginBottom: 10 }}>
+        Question {question.id.replace('q', '')} of 5
       </p>
       <h3
+        className="h-display"
         style={{
-          fontSize: 20,
+          fontSize: 23,
           fontWeight: 700,
-          letterSpacing: '-0.02em',
           color: T.textPrimary,
           margin: '0 0 4px',
-          lineHeight: 1.25,
+          lineHeight: 1.2,
         }}
       >
         {question.q}
@@ -181,7 +181,7 @@ function PillAnswer({ question, onAnswer }: QuestionCardProps) {
               style={{
                 ...pillBase,
                 border: `1px solid ${active ? T.orangeBorder : T.borderVisible}`,
-                background: active ? T.orangeDim : 'rgba(148,163,184,0.05)',
+                background: active ? T.orangeDim : T.pillBg,
                 color: active ? T.textPrimary : T.textSecondary,
               }}
             >

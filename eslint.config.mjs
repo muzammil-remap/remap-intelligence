@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Internal requirements docs (git-ignored) — includes a standalone
+    // design-handoff prototype that isn't part of the app.
+    "requirements/**",
   ]),
 ]);
 

@@ -33,7 +33,7 @@ export default function ScoreRing({ value, label, size = 56 }: ScoreRingProps) {
             cy={size / 2}
             r={r}
             fill="none"
-            stroke="rgba(148,163,184,0.08)"
+            stroke={T.pillBg}
             strokeWidth={6}
           />
           <circle

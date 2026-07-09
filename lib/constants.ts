@@ -1,44 +1,54 @@
-// Design tokens — single source of truth (frontend dark theme).
+// Design tokens — single source of truth for the frontend.
+// Every value is a CSS custom property defined in app/globals.css for BOTH
+// themes (light + dark, switched via <html data-theme>). Components keep
+// using T.* in inline styles and become theme-aware automatically.
+// NOTE: these are var() strings — usable in CSS/inline styles/SVG only,
+// never in emails or PDFs (those use literal hexes / the PDF palette below).
 export const T = {
-  // Backgrounds — layered depth, not flat black
-  bg: '#0a0f1a',
-  surface: '#111827',
-  elevated: '#1a2235',
-  surfaceHover: '#1e2a3a',
+  // Backgrounds — layered depth, not flat
+  bg: 'var(--bg)',
+  surface: 'var(--surface)',
+  elevated: 'var(--elevated)',
+  surfaceHover: 'var(--surface-hover)',
 
   // Borders
-  borderSubtle: 'rgba(148,163,184,0.08)',
-  borderVisible: 'rgba(148,163,184,0.15)',
-  borderFocus: 'rgba(99,179,237,0.4)',
+  borderSubtle: 'var(--border-subtle)',
+  borderVisible: 'var(--border-visible)',
+  borderStrong: 'var(--border-strong)',
+  borderFocus: 'var(--border-focus)',
 
-  // Brand accent — brighter, cleaner orange
-  orange: '#f97316',
-  orangeHover: '#fb923c',
-  orangeDim: 'rgba(249,115,22,0.12)',
-  orangeBorder: 'rgba(249,115,22,0.3)',
+  // Brand accent
+  orange: 'var(--orange)',
+  orangeHover: 'var(--orange-hover)',
+  orangeDim: 'var(--orange-dim)',
+  orangeBorder: 'var(--orange-border)',
 
   // Kept for backwards-compat with existing component references
-  blue: '#045089',
-  blueDim: 'rgba(4,80,137,0.2)',
+  blue: 'var(--blue)',
+  blueDim: 'var(--blue-dim)',
 
   // Text hierarchy — 4 levels
-  textPrimary: '#f8fafc',
-  textSecondary: '#94a3b8',
-  textMuted: '#64748b',
-  textDisabled: '#334155',
+  textPrimary: 'var(--text-primary)',
+  textSecondary: 'var(--text-secondary)',
+  textMuted: 'var(--text-muted)',
+  textDisabled: 'var(--text-disabled)',
 
-  // Semantic scores — softer
-  red: '#f87171',
-  amber: '#fbbf24',
-  blueScore: '#60a5fa',
-  green: '#4ade80',
+  // Semantic scores
+  red: 'var(--red)',
+  amber: 'var(--amber)',
+  blueScore: 'var(--blue-score)',
+  green: 'var(--green)',
 
   // Semantic backgrounds (callout boxes)
-  amberBg: 'rgba(251,191,36,0.08)',
-  amberBorder: 'rgba(251,191,36,0.2)',
-  redBg: 'rgba(248,113,113,0.08)',
-  greenBg: 'rgba(74,222,128,0.08)',
-  blueBg: 'rgba(96,165,250,0.08)',
+  amberBg: 'var(--amber-bg)',
+  amberBorder: 'var(--amber-border)',
+  redBg: 'var(--red-bg)',
+  greenBg: 'var(--green-bg)',
+  blueBg: 'var(--blue-bg)',
+
+  // Component-level tokens
+  pillBg: 'var(--pill-bg)',
+  inputBg: 'var(--input-bg)',
 } as const;
 
 export function scoreColor(n: number): string {

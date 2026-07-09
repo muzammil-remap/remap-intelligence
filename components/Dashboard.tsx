@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { T } from '@/lib/constants';
 import Logo from './Logo';
+import ThemeToggle from './ThemeToggle';
 
 interface NavItem {
   key: string;
@@ -20,6 +21,25 @@ const NAV: NavItem[] = [
   { key: 'work', label: 'Work with us', locked: true },
 ];
 
+function LockIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="4" y="11" width="16" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </svg>
+  );
+}
+
 export default function Dashboard() {
   const [active] = useState('generate');
   const [claimEmail, setClaimEmail] = useState('');
@@ -31,7 +51,7 @@ export default function Dashboard() {
         <div style={{ marginBottom: 26 }}>
           <Logo height={24} />
         </div>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
           {NAV.map((item, i) => {
             const isActive = item.key === active;
             return (
@@ -55,6 +75,7 @@ export default function Dashboard() {
                     borderRadius: 8,
                     padding: '9px 12px',
                     fontSize: 14,
+                    fontFamily: 'inherit',
                     fontWeight: isActive ? 600 : 400,
                     color: item.locked
                       ? T.textMuted
@@ -68,12 +89,15 @@ export default function Dashboard() {
                   }}
                 >
                   {item.label}
-                  {item.locked && <span style={{ fontSize: 12 }}>🔒</span>}
+                  {item.locked && <LockIcon />}
                 </button>
               </div>
             );
           })}
         </nav>
+        <div style={{ paddingTop: 14, borderTop: `1px solid ${T.borderSubtle}` }}>
+          <ThemeToggle />
+        </div>
       </aside>
 
       <main style={{ flex: 1 }}>
@@ -81,7 +105,10 @@ export default function Dashboard() {
           <p className="micro-label" style={{ color: T.orange, marginBottom: 6 }}>
             Generate Report
           </p>
-          <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 8px' }}>
+          <h1
+            className="h-display"
+            style={{ fontSize: 28, fontWeight: 700, margin: '0 0 8px' }}
+          >
             Run a new AI Readiness scan
           </h1>
           <p style={{ color: T.textSecondary, maxWidth: 540, marginBottom: 28 }}>
@@ -91,28 +118,19 @@ export default function Dashboard() {
           </p>
 
           <div
-            style={{
-              background: T.surface,
-              border: `1px solid ${T.borderSubtle}`,
-              borderRadius: 14,
-              padding: 22,
-              maxWidth: 540,
-              marginBottom: 22,
-            }}
+            className="remap-card"
+            style={{ padding: 22, maxWidth: 540, marginBottom: 22 }}
           >
             <h3 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 12px' }}>
               Start a new report
             </h3>
             <Link
               href="/"
+              className="remap-btn"
               style={{
-                display: 'inline-block',
-                background: T.orange,
-                color: '#fff',
-                borderRadius: 10,
-                padding: '12px 22px',
-                fontSize: 14,
-                fontWeight: 600,
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '0 22px',
                 textDecoration: 'none',
               }}
             >
@@ -120,15 +138,7 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          <div
-            style={{
-              background: T.surface,
-              border: `1px solid ${T.borderSubtle}`,
-              borderRadius: 14,
-              padding: 22,
-              maxWidth: 540,
-            }}
-          >
+          <div className="remap-card" style={{ padding: 22, maxWidth: 540 }}>
             <h3 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 6px' }}>
               Claim your dashboard
             </h3>
@@ -150,16 +160,10 @@ export default function Dashboard() {
                   onChange={(e) => setClaimEmail(e.target.value)}
                 />
                 <button
+                  className="btn-ghost"
                   onClick={() => setClaimSent(true)}
                   disabled={!claimEmail.trim()}
                   style={{
-                    background: 'transparent',
-                    color: T.textPrimary,
-                    border: `1px solid ${T.borderVisible}`,
-                    borderRadius: 10,
-                    padding: '11px 18px',
-                    fontSize: 14,
-                    fontWeight: 600,
                     cursor: claimEmail.trim() ? 'pointer' : 'not-allowed',
                     opacity: claimEmail.trim() ? 1 : 0.5,
                   }}
